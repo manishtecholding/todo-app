@@ -1,0 +1,26 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  background: rgb(36,36,36);
+  color: white;
+}
+
+li {
+  list-style: none;
+}
+
+.task-item {
+  border: solid whitesmoke 1px;
+  border-radius: 0.625rem;
+  padding: 0.625rem;
+  margin: 0.625rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-button {
+  margin: 0.625rem;
+}
