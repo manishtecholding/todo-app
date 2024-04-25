@@ -10,34 +10,47 @@ import {
   Input,
   Textarea,
 } from '@chakra-ui/react'
-import { ChangeEvent, useState } from 'react';
-import { CreateTask } from '../../App';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { CreateTask, UpdateTask } from '../../App';
 
 interface CreateToDoProps {
   isOpen: boolean,
+  isEdit: boolean,
   onClose: () => void,
   onOpen: () => void,
-  createTask: (CreateTask) => void
+  createTask: (CreateTask) => void,
+  editTask: (UpdateTask) => void,
+  itemToEdit: UpdateTask
 }
 
 const CreateToDo = ({
   isOpen,
+  isEdit,
   onClose,
   onOpen,
-  createTask
+  createTask,
+  editTask,
+  itemToEdit
 }: CreateToDoProps) => {
   // initialisation
 
   // state
-  const [formData, setFormData] = useState<{ title: string, description: string }>({
-    title: '',
-    description: '',
-  });
+  const [formData, setFormData] = useState<{ title: string, description: string }>(null);
 
   const [error, setError] = useState({
     title: '',
     description: ''
   })
+
+  // useEffects
+  useEffect(() => {
+    console.log('isEdit', itemToEdit)
+
+    isEdit ? setFormData({
+      title: itemToEdit?.title,
+      description: itemToEdit?.description
+    }) : setFormData({ title: '', description: '' })
+  }, []);
 
   // function handlers
 
@@ -59,25 +72,37 @@ const CreateToDo = ({
    * @returns {void}
    */
   const handleSubmit = async () => {
-    for (const [key, value] of Object.entries(formData)) {
-      if (value === '') {
-        await (async () => {
-          setError(prevError => ({
-            ...prevError,
-            [key]: `${key} cannot be empty`
-          }))
-        })()
-      } else {
-        await (async () => {
-          setError(prevError => ({
-            ...prevError,
-            [key]: ''
-          }));
-        })()
+    if (isEdit === true) {
+      editTask({
+        id: itemToEdit?.id,
+        title: formData?.title,
+        description: formData?.description,
+        completed: itemToEdit?.completed
+      })
+
+      // Update the element
+    } else {
+      for (const [key, value] of Object.entries(formData)) {
+        if (value === '') {
+          await (async () => {
+            setError(prevError => ({
+              ...prevError,
+              [key]: `${key} cannot be empty`
+            }))
+          })()
+        } else {
+          await (async () => {
+            setError(prevError => ({
+              ...prevError,
+              [key]: ''
+            }));
+          })()
+        }
       }
+
+      createTask(formData);
     }
 
-    createTask(formData);
   }
 
   return (
@@ -85,14 +110,14 @@ const CreateToDo = ({
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Create Task</ModalHeader>
+          <ModalHeader>{isEdit === false ? 'Create' : 'Edit'} Task</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Input
               name='title'
               placeholder='Title'
               className='m-2'
-              value={formData.title}
+              value={formData?.title}
               onChange={handleOnChange}
             />
             {error && error?.title !== '' && <div className='mx-2 text-rose-700'>{error.title}</div>}
@@ -101,7 +126,7 @@ const CreateToDo = ({
               name='description'
               placeholder='Description'
               className='m-2'
-              value={formData.description}
+              value={formData?.description}
               onChange={handleOnChange}
               size='lg'
             />

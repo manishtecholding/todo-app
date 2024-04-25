@@ -11,19 +11,31 @@ export interface CreateTask {
   description: string
 }
 
+export interface UpdateTask {
+  id: string,
+  title: string,
+  description: string,
+  completed: boolean
+}
+
 function App() {
   // initialisation
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // state
   const [data, setData] = useState<TasksItem[]>(JSON.parse(localStorage.getItem('tasks')));
-  const [isLoading, setIsLoading] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showCreate, setShowCreate] = useState<boolean>(false);
+  const [isEdit, setIsEdit] = useState<boolean>(null);
+  const [itemToEdit, setItemToEdit] = useState<any>(null);
 
   // useEffects
 
   // Set the initial tasks from JSON data
   useEffect(() => {
+    setIsEdit(false)
+    // Initialise dark mode for chakra UI
+    localStorage.setItem("chakra-ui-color-mode", "dark")
     if (!data) {
       localStorage.setItem("tasks", JSON.stringify(tasks))
     }
@@ -42,8 +54,12 @@ function App() {
    * @param item 
    * @returns {void}
    */
-  const handleEdit = (item: TasksItem) => {
-    console.log('handleEdit')
+  const toggleEditModal = (item: TasksItem) => {
+    console.log('toggleEditModal', item)
+    setItemToEdit(item);
+
+    setIsEdit(true);
+    onOpen();
   }
 
   /**
@@ -76,6 +92,7 @@ function App() {
    * @returns {void}
    */
   const toggleCreateTaskModal = () => {
+    setIsEdit(false)
     setShowCreate(!showCreate)
     onOpen()
   }
@@ -86,12 +103,6 @@ function App() {
    * @returns {void}
    */
   const createTask = (item: CreateTask) => {
-    console.log('createTask', item)
-
-    // Check for duplicate item by name 
-    // If duplicate Item exists show the Error message
-    // Else add it to the localStorage and show to the user
-
     const duplicateItem = data.find((element) => element.title === item.title);
     console.log(duplicateItem);
 
@@ -100,23 +111,36 @@ function App() {
       alert("Task with same name already exists!!");
     } else {
       // Add the Item
-      console.log('Item added successfully....')
-      console.log('createTask', data)
-      const updatedTasks = data.push({
+      data.push({
         id: (data.length + 1).toString(),
         title: item?.title,
         description: item?.description,
         completed: false
       });
 
-      console.log(data, 'createTask updatedTasks')
-
       localStorage.setItem("tasks", JSON.stringify(data))
-
       alert('Task added successfully!')
     }
-
     onClose();
+  }
+
+  /**
+   * @description Edit a task based on the input provided by the user
+   * @params none
+   * @returns {void}
+   */
+  const editTask = (item: UpdateTask) => {
+    const index = data.findIndex((element) => element.id === item.id);
+    console.log('editTask', index);
+
+
+    if (index >= 0) {
+      data.splice(index, 1, item);
+      console.log(data)
+      localStorage.setItem("tasks", JSON.stringify(data));
+
+      onClose();
+    }
   }
 
   return (
@@ -125,7 +149,7 @@ function App() {
       <div>
         <ViewToDo
           toDoList={data}
-          handleEdit={handleEdit}
+          toggleEditModal={toggleEditModal}
           handleDelete={handleDelete}
         />
       </div>
@@ -139,6 +163,9 @@ function App() {
           onClose={onClose}
           onOpen={onOpen}
           createTask={createTask}
+          isEdit={isEdit}
+          itemToEdit={isEdit ? itemToEdit : null}
+          editTask={editTask}
         />
       }
     </>
